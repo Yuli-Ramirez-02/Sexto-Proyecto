@@ -21,6 +21,7 @@ function iniciarApp() {
     paginaSiguiente();
     paginaAnterior();
     consultarAPI(); //Consulta la API en el backend de PHP
+    idCliente();
     nombreCliente(); //Añade el nombre del cliente al objeto de cita
     seleccionarFecha(); //Añade la fecha de la cita en el objeto 
     seleccionarHora(); //Añade la hora de la cita en el objeto
@@ -159,6 +160,10 @@ function seleccionarServicio(servicio) {
     }    
 }
 
+function idCliente() {
+    cita.id = document.querySelector('#id').value;
+}
+
 function nombreCliente() {
     cita.nombre = document.querySelector('#nombre').value;
 }
@@ -274,7 +279,7 @@ function mostrarResumen() {
 
     const fechaUTC = new Date( Date.UTC(year, mes, dia));
     const opciones = {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'}
-    const fechaFormateada = fechaUTC.toLocaleDateString('es-COL', opciones);
+    const fechaFormateada = fechaUTC.toLocaleDateString('es-CO', opciones);
 
     
     const fechaCita = document.createElement('P');
@@ -298,7 +303,43 @@ function mostrarResumen() {
 
 }
 
-function reservarCita() {
+async function reservarCita() {
+    const { nombre, fecha, hora, servicios, id} = cita;
+    const idServicios = servicios.map( servicio => servicio.id );
+    
     const datos = new FormData();
-    datos.append('nombre', 'Juan');
+
+    datos.append('fecha', fecha);
+    datos.append('hora', hora);
+    datos.append('usuarioId', id);
+    datos.append('servicios', idServicios);
+
+    try {
+        const url = 'http://localhost:3000/api/citas';
+
+        const respuesta = await fetch(url, {
+            method: 'POST',
+            body: datos
+        });
+
+        const resultado = await respuesta.json();
+        console.log(resultado.resultado);
+
+        if (resultado.resultado) {
+            Swal.fire({
+                icon: "success",
+                title: "Cita Creada",
+                text: "Tu cita fue creada correctamente!",
+                button: 'OK'
+            }).then(() => {
+                window.location.reload();
+            })
+        }
+    } catch (error) {
+        Swal.fire({
+            icon: "error",
+            title: "Error",
+            text: "Hubo un error al guardar la cita!",
+        });
+    }
 }
